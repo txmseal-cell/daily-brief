@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>daily-brief · 配置管理</title>
+<style>
+  :root {
+    --bg: #fafafa; --fg: #1a1a1a; --muted: #666; --border: #e5e5e5;
+    --accent: #2563eb; --danger: #dc2626; --success: #16a34a;
+    --card: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f0f; --fg: #e5e5e5; --muted: #999; --border: #2a2a2a;
+      --card: #1a1a1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 16px;
+  }
+  h1 { font-size: 1.5em; margin: 0 0 8px; }
+  h2 { font-size: 1.15em; margin: 28px 0 12px; padding-bottom: 6px;
+       border-bottom: 2px solid var(--border); }
+  .meta { color: var(--muted); font-size: 0.9em; margin-bottom: 16px; }
+  .back-home {
+    display: inline-block; margin-bottom: 16px; padding: 6px 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 4px; font-size: 0.9em; color: var(--fg); text-decoration: none;
+  }
+  .back-home:hover { background: var(--border); }
+
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    background: var(--card); padding: 12px;
+    border-radius: 6px; border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .toolbar button {
+    padding: 6px 12px; border: 1px solid var(--border);
+    background: var(--card); color: var(--fg);
+    border-radius: 4px; cursor: pointer; font-size: 0.9em;
+  }
+  .toolbar button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .toolbar button.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+  .toolbar input, .toolbar select {
+    padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: 4px; font-size: 0.9em; background: var(--card); color: var(--fg);
+  }
+  .toolbar .status { color: var(--muted); font-size: 0.85em; margin-left: auto; }
+
+  .list {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+  }
+  .item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+  }
+  .item:last-child { border-bottom: none; }
+  .item-name { font-weight: 500; flex: 1; }
+  .item-meta { color: var(--muted); font-size: 0.85em; }
+  .item button {
+    padding: 3px 8px; font-size: 0.8em; border: 1px solid var(--border);
+    background: transparent; color: var(--fg);
+    border-radius: 3px; cursor: pointer;
+  }
+  .item button:hover { background: var(--border); }
+  .item button.danger { color: var(--danger); border-color: var(--danger); }
+
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+
+  .toast {
+    position: fixed; top: 16px; right: 16px;
+    padding: 10px 14px; border-radius: 6px;
+    background: var(--accent); color: white; font-size: 0.9em;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000; opacity: 0; transition: opacity 0.2s;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { background: var(--danger); }
+  .toast.success { background: var(--success); }
+
+  @media (max-width: 600px) {
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar .status { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<a class="back-home" href="./">← 回到首页</a>
+<h1>⚙️ daily-brief 配置管理</h1>
+<div class="meta">在这里改 RSS 源、关键词，下次抓取自动生效（每天早 8:00 BJT）</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============== RSS 源管理 ============== -->
+<h2>📡 RSS 源（<span id="rss-count">0</span>）</h2>
+
+<div class="toolbar">
+  <input type="text" id="new-rss-name" placeholder="名称（如 BBC World）" style="flex:1; min-width:120px;">
+  <input type="text" id="new-rss-url" placeholder="RSS URL" style="flex:2; min-width:180px;">
+  <select id="new-rss-category">
+    <option value="新闻">新闻</option>
+    <option value="农业">农业</option>
+    <option value="经济">经济</option>
+    <option value="金融">金融</option>
+    <option value="科技" selected>科技</option>
+    <option value="政治">政治</option>
+    <option value="军事">军事</option>
+    <option value="娱乐">娱乐</option>
+    <option value="社会">社会</option>
+  </select>
+  <input type="number" id="new-rss-max" value="2" min="1" max="10" style="width:60px;" title="抓取条数">
+  <button class="primary" id="add-rss-btn">+ 添加</button>
+  <span class="status" id="rss-status"></span>
+</div>
+
+<div class="list" id="rss-list"></div>
+
+<!-- ============== 关键词追踪 ============== -->
+<h2>🏷️ 关键词追踪（<span id="kw-count">0</span>）</h2>
+
+<div class="toolbar">
+  <input type="text" id="new-kw-name" placeholder="主题名（如 小麦）" style="flex:1;">
+  <input type="text" id="new-kw-keywords" placeholder="关键词（逗号分隔：小麦,wheat,粮食）" style="flex:2;">
+  <button class="primary" id="add-kw-btn">+ 添加</button>
+  <span class="status" id="kw-status"></span>
+</div>
+
+<div class="list" id="kw-list"></div>
+
+<!-- ============== 底部操作 ============== -->
+<h2>💾 保存</h2>
+
+<div class="toolbar">
+  <button class="primary" id="save-btn">💾 保存到配置（立即生效）</button>
+  <button id="reload-btn">🔄 重新载入</button>
+  <button class="danger" id="reset-btn">🗑️ 重置（恢复 GitHub 配置）</button>
+  <span class="status" id="save-status"></span>
+</div>
+
+<div class="meta" style="margin-top: 24px;">
+  💡 小提示：
+  <ul>
+    <li>点击「保存」后，配置立即存到 Cloudflare KV。下次抓取（早 8:00 BJT）会用最新配置</li>
+    <li>如果你想立刻看效果，去 GitHub Actions 手动触发一次 workflow</li>
+    <li>失效 RSS 源会被自动跳过，每天检查后会回到这里（标红色）</li>
+  </ul>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
