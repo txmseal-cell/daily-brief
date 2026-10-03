@@ -1,0 +1,228 @@
+# daily-brief 配置文件
+# 所有 API Key 从环境变量读取，不硬编码
+
+# ============================================================
+# LLM 配置：MiniMax 主用，DeepSeek 备用
+# 用户 MiniMax 账户每月有免费额度，主用消耗免费 token
+# 日常抓取不调 AI，AI 只在 Cloudflare Functions 按需调用
+# 这里只给配置参考，实际调用在 functions/api/*.js 里
+# ============================================================
+llm:
+  primary:
+    provider: minimax
+    base_url: https://api.minimaxi.com/v1
+    api_key_env: MINIMAX_API_KEY
+    model: MiniMax-Text-01
+  fallback:
+    provider: deepseek
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+    model: deepseek-chat
+
+# ============================================================
+# 分类优先级（数字越小越靠前）
+# ============================================================
+categories:
+  priority:
+    - 农业
+    - 经济
+    - 金融
+    - 科技
+    - 政治
+    - 军事
+    - 娱乐
+    - 社会
+
+# ============================================================
+# 热度计算规则
+# 热度 = 跨来源次数 × 来源权重 × 分类权重
+# max_translate_per_day 限制每天 Function 翻译免费额度
+# ============================================================
+hot_rules:
+  cross_source: 3            # 跨来源阈值
+  cross_source_days: 7
+  source_weight:
+    Reuters: 10
+    BBC: 10
+    "Al Jazeera": 9
+    AP: 9
+    NPR: 8
+    DW: 8
+    "France 24": 8
+    "The Guardian": 8
+    FAO: 9
+    USDA: 9
+    IMF: 9
+    "World Bank": 8
+    OECD: 8
+    BIS: 8
+    NBER: 7
+    Bloomberg: 10
+    CNBC: 8
+    MarketWatch: 7
+    "Yahoo Finance": 7
+    "Seeking Alpha": 6
+    华尔街见闻: 8
+    财联社: 8
+    雪球: 7
+    "36氪": 7
+    "Proplanta": 8
+    agrarzeitung: 7
+    OilPrice: 8
+    "S&P Global": 8
+    ICRISAT: 7
+    IWMI: 7
+    IFPRI: 7
+    arXiv: 8
+    Nature: 9
+    "OpenAI Blog": 9
+    Anthropic: 9
+    "Google DeepMind": 9
+    "Hugging Face": 8
+    TechCrunch: 8
+    "MIT Technology Review": 8
+    "The Verge": 7
+    "Hacker News": 7
+    "IT之家": 7
+    Solidot: 7
+    "Defense.gov": 7
+    C4ISRNet: 7
+    "War on the Rocks": 7
+    V2EX: 6
+    掘金: 6
+    集思录: 6
+    知乎热榜: 6
+  category_weight:
+    农业: 10
+    经济: 9
+    金融: 9
+    科技: 8
+    政治: 7
+    军事: 6
+    娱乐: 3
+    社会: 3
+  max_translate_per_day: 5
+
+# ============================================================
+# 议题识别规则
+# ============================================================
+topics:
+  cross_source_threshold: 3
+  cross_source_days: 7
+  single_source_threshold: 3
+  single_source_days: 30
+  pending_archive_days: 30
+
+# ============================================================
+# 手动主题（你主动追踪的长期主题）
+# 命中关键词的事实自动归到对应主题
+# ============================================================
+manual_topics:
+  - name: 小麦
+    keywords: [小麦, wheat, 粮食, 出口限制, 俄罗斯, 乌克兰, 印度]
+  - name: 化肥
+    keywords: [化肥, fertilizer, 天然气, 尿素, urea, 钾肥, potash]
+  - name: AI_Agent
+    keywords: [AI agent, 智能体, agentic, MCP, Anthropic, OpenAI agent]
+  - name: 半导体
+    keywords: [半导体, GPU, NVIDIA, 台积电, TSMC, H100, B200, ASML, 出口管制]
+
+# ============================================================
+# RSS 信源（约 70 个，按层次组织）
+# 字段：name / url / category / extract_image / image_source / max_items
+# ============================================================
+sources:
+  # ------------------ 核心事实源（15-20）------------------
+  - { name: Reuters,         url: "https://www.reutersagency.com/feed/?best-topics=top-news&post_type=best", category: 新闻,   extract_image: true,  image_source: og, max_items: 3 }
+  - { name: BBC World,       url: "http://feeds.bbci.co.uk/news/world/rss.xml",                              category: 新闻,   extract_image: true,  image_source: og, max_items: 3 }
+  - { name: Al Jazeera,      url: "https://www.aljazeera.com/xml/rss/all.xml",                                category: 新闻,   extract_image: true,  image_source: og, max_items: 3 }
+  - { name: AP Top News,     url: "https://feeds.feedburner.com/TheAssociatedPress",                          category: 新闻,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: NPR,             url: "https://feeds.npr.org/1001/rss.xml",                                        category: 新闻,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: DW,              url: "https://rss.dw.com/rdf/rss-en-all",                                         category: 新闻,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: France 24,       url: "https://www.france24.com/en/rss",                                           category: 新闻,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: The Guardian,    url: "https://www.theguardian.com/international/rss",                             category: 新闻,   extract_image: true,  image_source: og, max_items: 3 }
+  - { name: FAO,             url: "https://www.fao.org/feeds/newsroom/rss/en",                                 category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: USDA,            url: "https://www.usda.gov/rss/latest-releases.xml",                              category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: IMF,             url: "https://www.imf.org/external/np/sec/rss/sec.xml",                            category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: World Bank,      url: "https://www.worldbank.org/en/news/all.rss",                                  category: 经济,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: OECD,            url: "https://www.oecd.org/newsroom/rss.xml",                                      category: 经济,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: BIS,             url: "https://www.bis.org/doclist/bis_publication_rss.xml",                        category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: NBER,            url: "https://www.nber.org/rss/new.xml",                                           category: 经济,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Foreign Affairs, url: "https://www.foreignaffairs.com/rss.xml",                                      category: 政治,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: Brookings,       url: "https://www.brookings.edu/feed/",                                            category: 政治,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: CSIS,            url: "https://www.csis.org/feed",                                                  category: 政治,   extract_image: false, image_source: rss, max_items: 1 }
+
+  # ------------------ 财经金融（10-15）------------------
+  - { name: Bloomberg,           url: "https://feeds.bloomberg.com/markets/news.rss",                            category: 金融,   extract_image: true,  image_source: og, max_items: 3 }
+  - { name: CNBC,                url: "https://www.cnbc.com/id/100003114/device/rss/rss.html",                  category: 金融,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: MarketWatch,         url: "https://www.marketwatch.com/rss/topstories",                              category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Yahoo Finance,       url: "https://finance.yahoo.com/news/rssindex",                                 category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Seeking Alpha,       url: "https://seekingalpha.com/feed.xml",                                        category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: 华尔街见闻,          url: "https://rsshub.app/wallstreetcn/news",                                      category: 金融,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: 财联社,              url: "https://rsshub.app/cls/telegraph",                                          category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: 雪球,                url: "https://rsshub.app/xueqiu/hots",                                            category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: 36氪,                url: "https://36kr.com/feed",                                                     category: 科技,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: 东方财富,            url: "https://rsshub.app/eastmoney/breaking-news",                                category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: 金十数据,            url: "https://rsshub.app/jin10",                                                  category: 金融,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: 集思录,              url: "https://rsshub.app/jisilu",                                                 category: 金融,   extract_image: false, image_source: rss, max_items: 1 }
+
+  # ------------------ 农业/大宗商品（10-15）------------------
+  - { name: Proplanta,           url: "https://www.proplanta.de/rss-agrar-news.xml",                              category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: agrarzeitung,        url: "https://www.agrarzeitung.de/rss/feed.rss",                                 category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: MercoPress,          url: "https://en.mercopress.com/rss/agriculture",                                category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: OilPrice,            url: "https://oilprice.com/rss/main",                                            category: 经济,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: S&P Global,          url: "https://www.spglobal.com/commodityinsights/en/rss-feed",                   category: 经济,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: ICRISAT,             url: "https://www.icrisat.org/feed/",                                            category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: IWMI,                url: "https://www.iwmi.org/feed/",                                               category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: IFPRI,               url: "https://www.ifpri.org/feed/",                                              category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: AMIS,                url: "http://www.amis-outlook.org/rss/news",                                    category: 农业,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: GFAR,                url: "https://www.gfar.net/rss.xml",                                             category: 农业,   extract_image: false, image_source: rss, max_items: 1 }
+
+  # ------------------ 科技/学术（10-15）------------------
+  - { name: arXiv cs.AI,         url: "http://export.arxiv.org/rss/cs.AI",                                         category: 科技,   extract_image: false, image_source: rss, max_items: 3 }
+  - { name: Nature,              url: "https://www.nature.com/nature.rss",                                        category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: ScienceDaily,        url: "https://www.sciencedaily.com/rss/all.xml",                                 category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: OpenAI Blog,         url: "https://openai.com/blog/rss.xml",                                          category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Anthropic,           url: "https://www.anthropic.com/news/rss.xml",                                   category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Google DeepMind,     url: "https://deepmind.google/blog/rss.xml",                                     category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Hugging Face,        url: "https://huggingface.co/blog/feed.xml",                                     category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: TechCrunch,          url: "https://techcrunch.com/feed/",                                             category: 科技,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: Ars Technica,        url: "https://feeds.arstechnica.com/arstechnica/index",                          category: 科技,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: MIT Tech Review,     url: "https://www.technologyreview.com/feed/",                                   category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: The Verge,           url: "https://www.theverge.com/rss/index.xml",                                   category: 科技,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: Hacker News,         url: "https://news.ycombinator.com/rss",                                         category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: IT之家,              url: "https://www.ithome.com/rss/",                                              category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: Solidot,             url: "https://www.solidot.org/index.rss",                                        category: 科技,   extract_image: false, image_source: rss, max_items: 2 }
+
+  # ------------------ 政治/军事（8-10）------------------
+  - { name: Defense.gov,         url: "https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?max=10&Site=945", category: 军事,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: C4ISRNet,            url: "https://www.c4isrnet.com/arc/outboundfeeds/rss/",                          category: 军事,   extract_image: false, image_source: rss, max_items: 2 }
+  - { name: War on the Rocks,    url: "https://warontherocks.com/feed/",                                          category: 军事,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: Lawfare,             url: "https://www.lawfaremedia.org/api/rss.xml",                                 category: 政治,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: The Diplomat,        url: "https://thediplomat.com/feed/",                                            category: 政治,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: Euronews,            url: "https://www.euronews.com/rss?format=mrss",                                 category: 新闻,   extract_image: true,  image_source: og, max_items: 2 }
+  - { name: RFI,                 url: "https://www.rfi.fr/en/rss",                                               category: 新闻,   extract_image: false, image_source: rss, max_items: 2 }
+
+  # ------------------ 论坛/信号（5-8）------------------
+  - { name: V2EX,                url: "https://www.v2ex.com/feed",                                                category: 科技,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: 掘金,                url: "https://rsshub.app/juejin/posts",                                          category: 科技,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: 知乎热榜,            url: "https://rsshub.app/zhihu/hotlist",                                         category: 社会,   extract_image: false, image_source: rss, max_items: 1 }
+  - { name: LinuxDo,             url: "https://linux.do/rss",                                                     category: 科技,   extract_image: false, image_source: rss, max_items: 1 }
+
+# ============================================================
+# 抓取参数
+# ============================================================
+fetch:
+  per_source_limit_default: 2     # 默认每源头条数（源自身 max_items 优先）
+  max_age_hours: 30               # 只看最近 N 小时
+  user_agent: "daily-brief/1.0 (+https://github.com)"
+  timeout_seconds: 15             # 单个源超时
+  og_image_timeout: 8             # 抓 og:image 超时
+
+# ============================================================
+# Functions 配置（仅参考，实际在 functions/api/*.js）
+# ============================================================
+functions:
+  rate_limit_per_ip_per_minute: 20
+  max_input_length: 5000
+  enable_fallback: true

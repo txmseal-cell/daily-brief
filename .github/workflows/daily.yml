@@ -1,0 +1,52 @@
+name: daily-brief-daily
+
+on:
+  schedule:
+    # 每天北京时间 8 点 = UTC 0 点
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run fetch (无 AI，原文直存)
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+        run: |
+          python fetch.py
+
+      - name: Commit & Push
+        run: |
+          git config user.name "daily-brief-bot"
+          git config user.email "bot@daily-brief.local"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "无变更，跳过 commit"
+            exit 0
+          fi
+          DATE=$(date -u +"%Y-%m-%d")
+          git commit -m "daily brief: ${DATE}"
+          git push

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "manual-小麦",
+    "topic": "小麦",
+    "keywords": [
+      "小麦"
+    ],
+    "first_seen": "2026-09-12",
+    "last_seen": "2026-09-12",
+    "source_count": 1,
+    "fact_ids": [
+      "F20260912-001"
+    ],
+    "status": "tracking"
+  }
+]

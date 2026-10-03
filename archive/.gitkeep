@@ -1,0 +1,2 @@
+# 这个文件让 archive/ 目录被 git 追踪
+# 实际每天生成的 .md 和 .html 会和代码一起 commit
