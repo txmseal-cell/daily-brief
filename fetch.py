@@ -437,6 +437,7 @@ def render_markdown(date: str, items: list, pending_topics: list, facts_index: l
     pending = "\n".join(PENDING_TOPIC_MD.format(
         topic=t.get("topic", ""),
         heat=t.get("source_count", 0),
+        keywords=", ".join(str(k) for k in t.get("keywords", [])) if isinstance(t.get("keywords"), list) else str(t.get("keywords", "")),
         first_seen=t.get("first_seen", ""),
         last_seen=t.get("last_seen", ""),
         source_count=t.get("source_count", 0),
