@@ -1,15 +1,22 @@
 [
   {
-    "id": "manual-小麦",
-    "topic": "小麦",
+    "id": "manual-AI_Agent",
+    "topic": "AI_Agent",
     "keywords": [
-      "小麦"
+      "AI agent",
+      "智能体",
+      "agentic",
+      "MCP",
+      "Anthropic",
+      "OpenAI agent"
     ],
-    "first_seen": "2026-09-12",
-    "last_seen": "2026-09-12",
-    "source_count": 1,
+    "first_seen": "2026-10-03",
+    "last_seen": "2026-10-03",
+    "source_count": 3,
     "fact_ids": [
-      "F20260912-001"
+      "F20261003-041",
+      "F20261003-045",
+      "F20261003-032"
     ],
     "status": "tracking"
   }
